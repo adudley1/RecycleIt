@@ -7,14 +7,11 @@ app = Flask(__name__)
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Update these to match your model setup
 NET = "/home/nvidia/jetson-inference/python/training/classification/models/recycle"
 DATASET = "/home/nvidia/jetson-inference/python/training/classification/data/recycle"
 
 recyclable = ["aluminum_soda_cans", "cardboard_packaging", "glass_beverage_bottles", "glass_cosmetic_containers", "glass_food_jars", "magazines", "newspaper", "office_paper", "paper_cups", "plastic_cup_lids", "plastic_detergent_bottles", "plastic_food_containers", "plastic_soda_bottles", "plastic_water_bottles", "steel_food_cans"]
-
 conditionally_recyclable = ["plastic_shopping_bags", "plastic_trash_bags", "plastic_straws", "styrofoam_cups", "styrofoam_food_containers", "disposable_plastic_cutlery"]
-
 compostable = ["coffee_grounds", "eggshells", "food_waste"]
 
 @app.route('/', methods=['GET', 'POST'])
@@ -35,10 +32,8 @@ def index():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
 
-            # Output file (just to avoid errors)
             output_path = os.path.join(app.config['UPLOAD_FOLDER'], "output.jpg")
 
-            # Run imagenet.py
             command = [
                 "imagenet.py",
                 f"--model={NET}/resnet18.onnx",
@@ -51,28 +46,61 @@ def index():
 
             try:
                 output = subprocess.check_output(command, stderr=subprocess.STDOUT, universal_newlines=True)
-                # Look for the classification output in stdout
+
                 for line in output.splitlines():
                     if "class" in line.lower() and "%" in line:
                         result = line
-                        if any(item in result for item in ["aluminum_soda_cans", "cardboard_packaging", "glass_beverage_bottles", "glass_cosmetic_containers", "glass_food_jars", "magazines", "newspaper", "office_paper", "paper_cups", "plastic_cup_lids", "plastic_detergent_bottles", "plastic_food_containers", "plastic_soda_bottles", "plastic_water_bottles", "steel_food_cans"]):
-                            result = f"""{result}
-                            ✅ Recyclable """
 
-                        elif any(item in result for item in ["plastic_shopping_bags", "plastic_trash_bags", "plastic_straws", "styrofoam_cups", "styrofoam_food_containers", "disposable_plastic_cutlery"]):
-                            result = f"""{result}
-                            ✅ Conditionally Recyclable (requires special facilities)"""
-
-                        elif any(item in result for item in ["coffee_grounds", "eggshells", "food_waste"]):
-                            result = f"""{result}
-                            🍂 Compostable """
+                        if any(item in result for item in recyclable):
+                            result += "\n✅ Recyclable"
+                        elif any(item in result for item in conditionally_recyclable):
+                            result += "\n✅ Conditionally Recyclable (requires special facilities)"
+                        elif any(item in result for item in compostable):
+                            result += "\n🍂 Compostable"
                         break
                 else:
                     result = "✅ Image processed, but no prediction found."
+
             except subprocess.CalledProcessError as e:
                 result = f"❌ Error:\n{e.output}"
 
+            # Log the result
+            if result:
+                with open("classification_log.txt", "a") as log_file:
+                    log_file.write(f"{datetime.now()} - {result}\n")
+
     return render_template("index.html", result=result, filename=filename)
+
+@app.route('/submit-code', methods=['POST'])
+def submit_code():
+    code = request.form.get('code')
+    result = None
+
+    if code:
+        code = code.strip().lower().replace(" ", "_")
+        if code in recyclable:
+            result = f"Code: {code}\n✅ Recyclable"
+        elif code in conditionally_recyclable:
+            result = f"Code: {code}\n✅ Conditionally Recyclable (requires special facilities)"
+        elif code in compostable:
+            result = f"Code: {code}\n🍂 Compostable"
+        else:
+            result = f"Code: {code}\n❌ Not recognized or not recyclable"
+
+        with open("classification_log.txt", "a") as log_file:
+            log_file.write(f"{datetime.now()} - Code Entry - {result}\n")
+
+    return render_template("index.html", result=result)
+
+@app.route('/logs')
+def view_logs():
+    try:
+        with open("classification_log.txt", "r") as f:
+            log_data = f.read()
+    except FileNotFoundError:
+        log_data = "No logs found."
+
+    return f"<h1>Classification Logs</h1><pre>{log_data}</pre>"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

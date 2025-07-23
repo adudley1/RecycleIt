@@ -1,10 +1,34 @@
-<!DOCTYPE html>
 <html>
 <head>
   <title>Can I Recycle It?</title>
+  <style>
+    #secretButton {
+      margin-top: 1000px;
+      opacity: 0.2;
+      border: none;
+      background: none;
+      color: black;
+      cursor: pointer;
+    }
+
+    #secretButton:hover {
+      opacity: 1;
+    }
+  </style>
+  <script>
+    function promptPassword() {
+      const password = prompt("Enter password:");
+      if (password === "admin") {
+        window.location.href = "/logs";
+      } else {
+        alert("Incorrect password.");
+      }
+    }
+  </script>
 </head>
 <body>
   <h1>RecycleIt</h1>
+
   <form method="POST" enctype="multipart/form-data">
     <input type="file" name="file" required>
     <button type="submit">Go</button>
@@ -13,9 +37,12 @@
   {% if result %}
     <h3>🔎 Result</h3>
     <p>{{ result }}</p>
-    {% if filename %}
+    {% if filename is defined and filename %}
       <img src="{{ url_for('static', filename='uploads/' ~ filename) }}" style="max-width:400px;">
     {% endif %}
   {% endif %}
+
+  <!-- Secret trigger button way below everything -->
+  <button id="secretButton" onclick="promptPassword()">.</button>
 </body>
 </html>
