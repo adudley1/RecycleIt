@@ -5,7 +5,6 @@ RecycleIt is a smart waste classification system that identifies whether an obje
 ## The Algorithm
 RecycleIt uses a ResNet-18 deep learning model, trained with Jetson Inference tools, to classify images of waste into recyclable, conditionally recyclable, or compostable categories. The Flask-based app accepts uploaded images, runs them through the model on a Jetson Orin Nano, and displays the result. 
 
-## Running this project
 
 ## How to Run
 
