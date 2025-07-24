@@ -20,3 +20,4 @@ RecycleIt uses a ResNet-18 deep learning model, trained with Jetson Inference to
 10) When it's done it should show the image you uploaded as well as what it identifies it to be, it's percent certainty, and if it's recyclable.
 
 VIDEO INSTRUCTIONS: https://github.com/user-attachments/assets/297e09ec-145b-4c78-8c07-9d58e1e58cb1
+https://docs.google.com/document/d/13eu8l9cbmUU4k26Hvfb9Z24kwbKWcaVGAkkWQYtEMLU/edit?tab=t.0
